@@ -102,7 +102,7 @@ public class MazeCell {
     }
 
     public String toString(){
-        return String.format("[f: %d, position: (%d,%d), visited: %b, parent: %d]", f, x, y, visited, parent);
+        return String.format("[f: %f, position: (%d,%d), visited: %b, parent: %d]", f, x, y, visited, parent);
     }
 
     public static void main(String[] args) {

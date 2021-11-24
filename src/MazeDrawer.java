@@ -1,9 +1,8 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Line2D;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.PriorityQueue;
+import java.lang.reflect.Array;
+import java.util.*;
 
 import static java.lang.Thread.sleep;
 
@@ -20,6 +19,10 @@ public class MazeDrawer {
             frame.setVisible(true);
             try {
                 mazePanel.solveDFS(0, 0);
+                mazePanel.repaint();
+                sleep(3000);
+                mazePanel.clear();
+                mazePanel.solveBFS(0, 0);
                 mazePanel.repaint();
                 sleep(3000);
                 mazePanel.clear();
@@ -113,11 +116,63 @@ public class MazeDrawer {
             }
         }
 
+        private void setBFSSolution(HashMap<Integer, MazeCell> closed) throws InterruptedException {
+            int parent = maze[size-1][size-1].getParent();
+            while (parent != -1) {
+                MazeCell cell = closed.get(parent);
+                cell.setSolution(true);
+                parent = cell.getParent();
+                repaint();
+                sleep(100 / size);
+            }
+        }
+
+        public void solveBFS(int px, int py) throws InterruptedException {
+            LinkedList<MazeCell> queue = new LinkedList<MazeCell>();
+            HashMap<Integer, MazeCell> closed = new HashMap<Integer, MazeCell>();
+            MazeCell current = maze[px][py];
+            current.setVisited(true);
+            current.setParent(-1);
+            closed.put(current.hashCode(), current);
+            queue.add(current);
+            while (!queue.isEmpty()) {
+                if (current.getX() == size - 1 && current.getY() == size - 1) {
+                    setBFSSolution(closed);
+                    return;
+                }
+                for (SUCCESSORS s: getSuccessors(current.getX(), current.getY())) {
+                    MazeCell neighbor = null;
+                    if (s == SUCCESSORS.TOP) {
+                        neighbor = maze[current.getX()][current.getY() - 1];
+                    }
+                    if (s == SUCCESSORS.BOTTOM) {
+                        neighbor = maze[current.getX()][current.getY() + 1];
+                    }
+                    if (s == SUCCESSORS.LEFT) {
+                        neighbor = maze[current.getX() - 1][current.getY()];
+                    }
+                    if (s == SUCCESSORS.RIGHT) {
+                        neighbor = maze[current.getX() + 1][current.getY()];
+                    }
+                    if(!neighbor.isVisited()) {
+                        neighbor.setVisited(true);
+                        neighbor.setParent(current.hashCode());
+                        closed.put(neighbor.hashCode(), neighbor);
+                        queue.add(neighbor);
+                        repaint();
+                        sleep(500 / size);
+                    }
+                }
+                queue.removeFirst();
+                current = queue.getFirst();
+            }
+        }
+
         private double h(int px, int py) {
             return Math.sqrt(Math.pow((size - 1) - px, 2) + Math.pow((size - 1) - py,2));
         }
 
-        private void setSolution(ArrayList<MazeCell> closed) throws InterruptedException {
+        private void setAStarSolution(ArrayList<MazeCell> closed) throws InterruptedException {
             MazeCell cell = closed.get(closed.size() - 1);
             cell.setSolution(true);
             while (cell.getParent() != -1) {
@@ -145,7 +200,7 @@ public class MazeDrawer {
                 current.setVisited(true);
                 closed.add(current);
                 if (current.getX() == size -1 && current.getY() == size -1) {
-                    setSolution(closed);
+                    setAStarSolution(closed);
                     return;
                 }
                 g++;
