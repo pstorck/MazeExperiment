@@ -6,39 +6,53 @@ import java.util.*;
 
 import static java.lang.Thread.sleep;
 
+
 public class MazeDrawer {
+    public static final int WIDTH = 100;
+    public static final int HEIGHT = 100;
+    public static final boolean RANDOM = false;
+
     public static void main(String[] args) {
+        Random random = new Random();
         JFrame frame = new JFrame();
         frame.setLayout(new GridBagLayout());
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        int width = WIDTH;
+        int height = HEIGHT;
+        int startX = RANDOM ? random.nextInt(width) : 0;
+        int startY = RANDOM ? random.nextInt(height) : 0;
         for (int i = 0; i < 100; i++) {
-            MazePanel mazePanel = new MazePanel(100);
-            mazePanel.setPreferredSize(new Dimension(810,810));
+            MazePanel mazePanel = new MazePanel(width, height);
+            mazePanel.setPreferredSize(new Dimension(800 / Math.max(width, height) * width + 10 ,800 / Math.max(width, height) * height + 10));
             frame.add(mazePanel);
             frame.setVisible(true);
             try {
-                mazePanel.solveDFS(0, 0);
+                mazePanel.solveDFS(startX, startY);
                 mazePanel.repaint();
                 sleep(3000);
                 mazePanel.clear();
-                mazePanel.solveBFS(0, 0);
+                mazePanel.solveBFS(startX, startY);
                 mazePanel.repaint();
                 sleep(3000);
                 mazePanel.clear();
-                mazePanel.solveAStar(0,0);
+                mazePanel.solveAStar(startX,startY);
                 mazePanel.repaint();
                 sleep(3000);
             } catch (Exception e) {
                 e.printStackTrace();
             }
             frame.remove(mazePanel);
+            frame.repaint();
         }
         System.exit(0);
     }
 
     public static class MazePanel extends JPanel {
         private int size;
+        private int timer;
+        private int width;
+        private int height;
         private MazeCell[][] maze;
         private boolean solved = false;
 
@@ -50,23 +64,26 @@ public class MazeDrawer {
             }
         }
 
-        public MazePanel(int size) {
-            this.size = size;
-            MazeGenerator mazeGen = new MazeGenerator(size, size);
+        public MazePanel(int width, int height) {
+            this.size = Math.max(width, height);
+            this.timer = (int)Math.sqrt(width * height) * 2;
+            this.width = width;
+            this.height = height;
+            MazeGenerator mazeGen = new MazeGenerator(width, height);
             mazeGen.generateMaze(0,0);
             this.maze = mazeGen.getMaze();
             clear();
-            maze[size-1][size-1].setSolution(true);
+            maze[width-1][height-1].setSolution(true);
         }
 
         public void clear() {
-            for (int r = 0; r < size; r++) {
-                for (int c = 0; c < size; c++) {
+            for (int r = 0; r < this.width; r++) {
+                for (int c = 0; c < this.height; c++) {
                     maze[r][c].setVisited(false);
                     maze[r][c].setSolution(false);
                 }
             }
-            maze[size-1][size-1].setSolution(true);
+            maze[width-1][height-1].setSolution(true);
         }
 
         private ArrayList<SUCCESSORS> getSuccessors(int px, int py) {
@@ -78,10 +95,10 @@ public class MazeDrawer {
             if (py > 0 && !cell.hasTop()) {
                 successors.add(SUCCESSORS.TOP);
             }
-            if (px + 1 < size && !cell.hasRight()) {
+            if (px + 1 < width && !cell.hasRight()) {
                 successors.add(SUCCESSORS.RIGHT);
             }
-            if (py + 1 < size && !cell.hasBottom()) {
+            if (py + 1 < height && !cell.hasBottom()) {
                 successors.add(SUCCESSORS.BOTTOM);
             }
             return successors;
@@ -89,9 +106,9 @@ public class MazeDrawer {
 
         public void solveDFS(int px, int py) throws InterruptedException {
             repaint();
-            sleep(500 / size);
+            sleep(500 / timer);
             maze[px][py].setVisited(true);
-            if (px == size - 1 && py == size - 1) {
+            if (px == width - 1 && py == height - 1) {
                 solved = true;
                 return;
             }
@@ -112,18 +129,18 @@ public class MazeDrawer {
             if (solved) {
                 maze[px][py].setSolution(true);
                 repaint();
-                sleep(100 / size);
+                sleep(200 / timer);
             }
         }
 
         private void setBFSSolution(HashMap<Integer, MazeCell> closed) throws InterruptedException {
-            int parent = maze[size-1][size-1].getParent();
+            int parent = maze[width-1][height-1].getParent();
             while (parent != -1) {
                 MazeCell cell = closed.get(parent);
                 cell.setSolution(true);
                 parent = cell.getParent();
                 repaint();
-                sleep(100 / size);
+                sleep(200 / timer);
             }
         }
 
@@ -136,7 +153,7 @@ public class MazeDrawer {
             closed.put(current.hashCode(), current);
             queue.add(current);
             while (!queue.isEmpty()) {
-                if (current.getX() == size - 1 && current.getY() == size - 1) {
+                if (current.getX() == width - 1 && current.getY() == height - 1) {
                     setBFSSolution(closed);
                     return;
                 }
@@ -160,7 +177,7 @@ public class MazeDrawer {
                         closed.put(neighbor.hashCode(), neighbor);
                         queue.add(neighbor);
                         repaint();
-                        sleep(500 / size);
+                        sleep(500 / timer);
                     }
                 }
                 queue.removeFirst();
@@ -169,7 +186,7 @@ public class MazeDrawer {
         }
 
         private double h(int px, int py) {
-            return Math.sqrt(Math.pow((size - 1) - px, 2) + Math.pow((size - 1) - py,2));
+            return Math.sqrt(Math.pow((width - 1) - px, 2) + Math.pow((height - 1) - py,2));
         }
 
         private void setAStarSolution(ArrayList<MazeCell> closed) throws InterruptedException {
@@ -179,7 +196,7 @@ public class MazeDrawer {
                 cell = closed.get(cell.getParent() - 2);
                 cell.setSolution(true);
                 repaint();
-                sleep(100 / size);
+                sleep(200 / timer);
             }
         }
 
@@ -195,11 +212,11 @@ public class MazeDrawer {
 
             while (!open.isEmpty()) {
                 repaint();
-                sleep(500 / size);
+                sleep(500 / timer);
                 MazeCell current = open.poll();
                 current.setVisited(true);
                 closed.add(current);
-                if (current.getX() == size -1 && current.getY() == size -1) {
+                if (current.getX() == width -1 && current.getY() == height -1) {
                     setAStarSolution(closed);
                     return;
                 }
@@ -230,14 +247,14 @@ public class MazeDrawer {
         public void paintComponent(Graphics g) {
             super.paintComponent(g);
 
-            for (int r = 0; r < size; r++) {
-                for (int c = 0; c < size; c++) {
+            for (int r = 0; r < width; r++) {
+                for (int c = 0; c < height; c++) {
                     if (maze[r][c].isSolution()) {
                         g.setColor(Color.green);
-                        g.fillRect(r * 800/size, c * 800/size, 800/size, 800/size);
+                        g.fillRect(r * 800 / size, c * 800 / size, 800 / size, 800 / size);
                     } else if (maze[r][c].isVisited()) {
                         g.setColor(Color.blue);
-                        g.fillRect(r * 800/size, c * 800/size, 800/size, 800/size);
+                        g.fillRect(r * 800 / size, c * 800 / size, 800 / size, 800 / size);
                     }
                 }
             }
@@ -246,22 +263,22 @@ public class MazeDrawer {
             g2.setStroke(new BasicStroke((int)Math.ceil(100 / size)));
             g2.setColor(Color.black);
             Line2D line;
-            for (int r = 0; r < size; r++) {
-                for (int c = 0; c < size; c++) {
+            for (int r = 0; r < width; r++) {
+                for (int c = 0; c < height; c++) {
                     MazeCell cell = maze[r][c];
                     if (cell.hasTop()) {
-                        line = new Line2D.Float(800/size * r,  800/size * c,   800/size * (r+1), 800/size * c);
+                        line = new Line2D.Float(800 / size * r,  800 / size * c,   800 / size * (r+1), 800 / size * c);
                         g2.draw(line);
                     }
                     if (cell.hasLeft()) {
-                        line = new Line2D.Float(800/size * r,  800/size * c,   800/size * r, 800/size * (c+1));
+                        line = new Line2D.Float(800 / size * r,  800 / size  * c,   800 / size  * r, 800 / size  * (c+1));
                         g2.draw(line);
                     }
                 }
-                line = new Line2D.Float(800/size * r, 800, 800/size * (r+1), 800);
+                line = new Line2D.Float(800 / size * r, 800 / size * height, 800 / size  * (r+1), 800 / size * height);
                 g2.draw(line);
             }
-            line = new Line2D.Float(800, 0, 800, 800);
+            line = new Line2D.Float(800 / size * width, 0, 800 / size * width, 800 / size * height);
             g2.draw(line);
         }
     }

@@ -114,7 +114,6 @@ public class MazeGenerator {
         System.out.println("MAZE GENERATOR");
         MazeGenerator mazeGen = new MazeGenerator(20,20);
         mazeGen.generateMaze(0,0);
-        MazeCell[][] maze = mazeGen.getMaze();
-        System.out.println(maze[0][0]);
+        mazeGen.printMaze();
     }
 }
