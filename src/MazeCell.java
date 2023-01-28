@@ -101,12 +101,12 @@ public class MazeCell {
         this.f = f;
     }
 
-    public String toString(){
+    public String toString() {
         return String.format("[f: %f, position: (%d,%d), visited: %b, parent: %d]", f, x, y, visited, parent);
     }
 
     public static void main(String[] args) {
-        MazeCell cell = new MazeCell(0,0);
+        MazeCell cell = new MazeCell(0, 0);
         System.out.println(cell);
     }
 }
