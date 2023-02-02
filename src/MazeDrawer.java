@@ -31,7 +31,7 @@ public class MazeDrawer {
         int height = HEIGHT;
         int startX = RANDOM ? random.nextInt(width) : 0;
         int startY = RANDOM ? random.nextInt(height) : 0;
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 3; i++) {
             MazePanel mazePanel = new MazePanel(width, height);
             mazePanel.setPreferredSize(new Dimension(800 / Math.max(width, height) * width + 10, 800 / Math.max(width, height) * height + 10));
             frame.add(mazePanel);
@@ -65,8 +65,6 @@ public class MazeDrawer {
         private MazeCell[][] maze;
         private boolean solved = false;
 
-        private enum SUCCESSORS {TOP, BOTTOM, LEFT, RIGHT}
-
         public class MazeCellComparator implements Comparator<MazeCell> {
             public int compare(MazeCell a, MazeCell b) {
                 return Double.compare(a.getF(), b.getF());
@@ -93,17 +91,17 @@ public class MazeDrawer {
                 solved = true;
                 return;
             }
-            for (SUCCESSORS s : getSuccessors(px, py)) {
-                if (s == SUCCESSORS.BOTTOM && !maze[px][py + 1].isVisited() && !solved) {
+            for (Successor s : getSuccessor(px, py)) {
+                if (s == Successor.BOTTOM && !maze[px][py + 1].isVisited() && !solved) {
                     solveDFS(px, py + 1);
                 }
-                if (s == SUCCESSORS.RIGHT && !maze[px + 1][py].isVisited() && !solved) {
+                if (s == Successor.RIGHT && !maze[px + 1][py].isVisited() && !solved) {
                     solveDFS(px + 1, py);
                 }
-                if (s == SUCCESSORS.TOP && !maze[px][py - 1].isVisited() && !solved) {
+                if (s == Successor.TOP && !maze[px][py - 1].isVisited() && !solved) {
                     solveDFS(px, py - 1);
                 }
-                if (s == SUCCESSORS.LEFT && !maze[px - 1][py].isVisited() && !solved) {
+                if (s == Successor.LEFT && !maze[px - 1][py].isVisited() && !solved) {
                     solveDFS(px - 1, py);
                 }
             }
@@ -127,18 +125,18 @@ public class MazeDrawer {
                     setBFSSolution(closed);
                     return;
                 }
-                for (SUCCESSORS s : getSuccessors(current.getX(), current.getY())) {
+                for (Successor s : getSuccessor(current.getX(), current.getY())) {
                     MazeCell neighbor = null;
-                    if (s == SUCCESSORS.TOP) {
+                    if (s == Successor.TOP) {
                         neighbor = maze[current.getX()][current.getY() - 1];
                     }
-                    if (s == SUCCESSORS.BOTTOM) {
+                    if (s == Successor.BOTTOM) {
                         neighbor = maze[current.getX()][current.getY() + 1];
                     }
-                    if (s == SUCCESSORS.LEFT) {
+                    if (s == Successor.LEFT) {
                         neighbor = maze[current.getX() - 1][current.getY()];
                     }
-                    if (s == SUCCESSORS.RIGHT) {
+                    if (s == Successor.RIGHT) {
                         neighbor = maze[current.getX() + 1][current.getY()];
                     }
                     if (!neighbor.isVisited()) {
@@ -176,18 +174,18 @@ public class MazeDrawer {
                     return;
                 }
                 g++;
-                for (SUCCESSORS s : getSuccessors(current.getX(), current.getY())) {
+                for (Successor s : getSuccessor(current.getX(), current.getY())) {
                     MazeCell neighbor = null;
-                    if (s == SUCCESSORS.TOP) {
+                    if (s == Successor.TOP) {
                         neighbor = maze[current.getX()][current.getY() - 1];
                     }
-                    if (s == SUCCESSORS.BOTTOM) {
+                    if (s == Successor.BOTTOM) {
                         neighbor = maze[current.getX()][current.getY() + 1];
                     }
-                    if (s == SUCCESSORS.LEFT) {
+                    if (s == Successor.LEFT) {
                         neighbor = maze[current.getX() - 1][current.getY()];
                     }
-                    if (s == SUCCESSORS.RIGHT) {
+                    if (s == Successor.RIGHT) {
                         neighbor = maze[current.getX() + 1][current.getY()];
                     }
                     if (!neighbor.isVisited()) {
@@ -247,20 +245,20 @@ public class MazeDrawer {
             maze[width - 1][height - 1].setSolution(true);
         }
 
-        private ArrayList<SUCCESSORS> getSuccessors(int px, int py) {
-            ArrayList<SUCCESSORS> successors = new ArrayList<SUCCESSORS>(4);
+        private ArrayList<Successor> getSuccessor(int px, int py) {
+            ArrayList<Successor> successors= new ArrayList<Successor>(4);
             MazeCell cell = maze[px][py];
             if (px > 0 && !cell.hasLeft()) {
-                successors.add(SUCCESSORS.LEFT);
+                successors.add(Successor.LEFT);
             }
             if (py > 0 && !cell.hasTop()) {
-                successors.add(SUCCESSORS.TOP);
+                successors.add(Successor.TOP);
             }
             if (px + 1 < width && !cell.hasRight()) {
-                successors.add(SUCCESSORS.RIGHT);
+                successors.add(Successor.RIGHT);
             }
             if (py + 1 < height && !cell.hasBottom()) {
-                successors.add(SUCCESSORS.BOTTOM);
+                successors.add(Successor.BOTTOM);
             }
             return successors;
         }

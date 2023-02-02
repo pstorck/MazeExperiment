@@ -7,8 +7,6 @@ public class MazeGenerator {
     private MazeCell[][] maze;
     private Random random;
 
-    private enum SUCCESSORS {TOP, BOTTOM, LEFT, RIGHT}
-
     public MazeGenerator(int width, int height) {
         this.width = width;
         this.height = height;
@@ -35,12 +33,12 @@ public class MazeGenerator {
     public void generateMaze(int px, int py) {
         MazeCell cell = maze[px][py];
         cell.setVisited(true);
-        ArrayList<SUCCESSORS> successors = getSuccessors(px, py);
+        ArrayList<Successor> successors = getSuccessors(px, py);
         while (!successors.isEmpty()) {
             int r = random.nextInt(successors.size());
-            SUCCESSORS s = successors.get(r);
+            Successor s = successors.get(r);
             successors.remove(r);
-            if (s == SUCCESSORS.TOP) {
+            if (s == Successor.TOP) {
                 MazeCell top = maze[px][py - 1];
                 if (!top.isVisited()) {
                     cell.setTop(false);
@@ -48,7 +46,7 @@ public class MazeGenerator {
                     generateMaze(px, py - 1);
                 }
             }
-            if (s == SUCCESSORS.BOTTOM) {
+            if (s == Successor.BOTTOM) {
                 MazeCell bottom = maze[px][py + 1];
                 if (!bottom.isVisited()) {
                     cell.setBottom(false);
@@ -56,7 +54,7 @@ public class MazeGenerator {
                     generateMaze(px, py + 1);
                 }
             }
-            if (s == SUCCESSORS.LEFT) {
+            if (s == Successor.LEFT) {
                 MazeCell left = maze[px - 1][py];
                 if (!left.isVisited()) {
                     cell.setLeft(false);
@@ -64,7 +62,7 @@ public class MazeGenerator {
                     generateMaze(px - 1, py);
                 }
             }
-            if (s == SUCCESSORS.RIGHT) {
+            if (s == Successor.RIGHT) {
                 MazeCell right = maze[px + 1][py];
                 if (!right.isVisited()) {
                     cell.setRight(false);
@@ -100,19 +98,19 @@ public class MazeGenerator {
         System.out.println("+");
     }
 
-    private ArrayList<SUCCESSORS> getSuccessors(int px, int py) {
-        ArrayList<SUCCESSORS> successors = new ArrayList<SUCCESSORS>(4);
+    private ArrayList<Successor> getSuccessors(int px, int py) {
+        ArrayList<Successor> successors = new ArrayList<Successor>(4);
         if (px > 0) {
-            successors.add(SUCCESSORS.LEFT);
+            successors.add(Successor.LEFT);
         }
         if (py > 0) {
-            successors.add(SUCCESSORS.TOP);
+            successors.add(Successor.TOP);
         }
         if (px + 1 < width) {
-            successors.add(SUCCESSORS.RIGHT);
+            successors.add(Successor.RIGHT);
         }
         if (py + 1 < height) {
-            successors.add(SUCCESSORS.BOTTOM);
+            successors.add(Successor.BOTTOM);
         }
         return successors;
     }
