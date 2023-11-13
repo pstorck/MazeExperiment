@@ -1,12 +1,13 @@
-import javax.swing.BoxLayout;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import static java.lang.Thread.sleep;
+
 import java.awt.Dimension;
 import java.awt.GridBagLayout;
 import java.util.Random;
 
-import static java.lang.Thread.sleep;
+import javax.swing.BoxLayout;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 public class MazeDrawer {
     public static final int WIDTH = 100;
