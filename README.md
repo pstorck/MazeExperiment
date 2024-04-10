@@ -3,8 +3,9 @@
 ### Summary ###
 This is a side project written in Java that can create mazes of any given 
 width and height and then solve them using Breadth First Search,
-DepthFirst Search and A* Search algorithms. The maze creation and search
-algorithms are all written recursively.
+DepthFirst Search and A* Search algorithms. Originally, the maze creation and search
+algorithms were all written recursively. They are now all written iteratively to 
+prevent stack overflow errors when the maze size gets too large.
 
 ### How To Use ###
 Editing and running the main method of the MazeGenerator class will display
@@ -14,7 +15,7 @@ any/all of the search algorithms displayed on a JFrame window.
 
 
 ### What I Learned ###
-- Recursive algorithms for Breadth First Search, Depth First Search, A* Search and for generating a maze
+- Recursive and Iterative algorithms for Breadth First Search, Depth First Search, A* Search and for generating a maze
 - Graphics in Java using JFrame, JPanel, and AWT
 
 

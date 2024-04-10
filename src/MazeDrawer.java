@@ -1,14 +1,9 @@
-import static java.lang.Thread.sleep;
-
-import java.awt.Canvas;
+import javax.swing.JFrame;
 import java.awt.Dimension;
 import java.awt.GridBagLayout;
 import java.util.Random;
 
-import javax.swing.BoxLayout;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import static java.lang.Thread.sleep;
 
 public class MazeDrawer {
     public static final int PIXELS = 1500;
