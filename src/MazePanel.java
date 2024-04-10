@@ -1,5 +1,4 @@
-import static java.lang.Thread.sleep;
-
+import javax.swing.JPanel;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
@@ -7,19 +6,19 @@ import java.awt.Graphics2D;
 import java.awt.geom.Line2D;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
+import java.util.Stack;
 
-import javax.swing.JPanel;
+import static java.lang.Thread.sleep;
 
 public class MazePanel extends JPanel {
+    private int pixels;
     private int size;
     private int timer;
     private int width;
     private int height;
     private MazeCell[][] maze;
-    private boolean solved = false;
 
     public class MazeCellComparator implements Comparator<MazeCell> {
         public int compare(MazeCell a, MazeCell b) {
@@ -27,9 +26,10 @@ public class MazePanel extends JPanel {
         }
     }
 
-    public MazePanel(int width, int height) {
+    public MazePanel(int width, int height, int pixels) {
+        this.pixels = pixels;
         this.size = Math.max(width, height);
-        this.timer = (int) Math.sqrt(width * height) * 2;
+        this.timer = Math.min(500, Math.max(width, height));
         this.width = width;
         this.height = height;
         MazeGenerator mazeGen = new MazeGenerator(width, height);
@@ -40,46 +40,55 @@ public class MazePanel extends JPanel {
     }
 
     public void solveDFS(int px, int py) throws InterruptedException {
-        repaint();
-        sleep(500 / timer);
-        maze[px][py].setVisited(true);
-        if (px == width - 1 && py == height - 1) {
-            solved = true;
-            return;
-        }
-        for (Successor s : getSuccessor(px, py)) {
-            if (s == Successor.BOTTOM && !maze[px][py + 1].isVisited() && !solved) {
-                solveDFS(px, py + 1);
-            }
-            if (s == Successor.RIGHT && !maze[px + 1][py].isVisited() && !solved) {
-                solveDFS(px + 1, py);
-            }
-            if (s == Successor.TOP && !maze[px][py - 1].isVisited() && !solved) {
-                solveDFS(px, py - 1);
-            }
-            if (s == Successor.LEFT && !maze[px - 1][py].isVisited() && !solved) {
-                solveDFS(px - 1, py);
-            }
-        }
-        if (solved) {
-            maze[px][py].setSolution(true);
+        Stack<MazeCell> stack = new Stack<>();
+        MazeCell cell = maze[px][py];
+        stack.push(cell);
+        cell.setParent(null);
+        while (!stack.isEmpty()) {
             repaint();
-            sleep(200 / timer);
+            sleep(500 / timer);
+            cell = stack.pop();
+            px = cell.getX();
+            py = cell.getY();
+            cell.setVisited(true);
+            if (px == width - 1 && py == height - 1) {
+                break;
+            }
+            for (Successor s : getSuccessor(px, py)) {
+                if (s == Successor.BOTTOM && !maze[px][py + 1].isVisited()) {
+                    MazeCell newCell = maze[px][py + 1];
+                    stack.push(newCell);
+                    newCell.setParent(cell);
+                }
+                if (s == Successor.RIGHT && !maze[px + 1][py].isVisited()) {
+                    MazeCell newCell = maze[px + 1][py];
+                    stack.push(newCell);
+                    newCell.setParent(cell);
+                }
+                if (s == Successor.TOP && !maze[px][py - 1].isVisited()) {
+                    MazeCell newCell = maze[px][py - 1];
+                    stack.push(newCell);
+                    newCell.setParent(cell);
+                }
+                if (s == Successor.LEFT && !maze[px - 1][py].isVisited()) {
+                    MazeCell newCell = maze[px - 1][py];
+                    stack.push(newCell);
+                    newCell.setParent(cell);
+                }
+            }
         }
+        setSolution();
     }
 
     public void solveBFS(int px, int py) throws InterruptedException {
         LinkedList<MazeCell> queue = new LinkedList<MazeCell>();
-        HashMap<Integer, MazeCell> closed = new HashMap<Integer, MazeCell>();
         MazeCell current = maze[px][py];
         current.setVisited(true);
-        current.setParent(-1);
-        closed.put(current.hashCode(), current);
+        current.setParent(null);
         queue.add(current);
         while (!queue.isEmpty()) {
             if (current.getX() == width - 1 && current.getY() == height - 1) {
-                setBFSSolution(closed);
-                return;
+                break;
             }
             for (Successor s : getSuccessor(current.getX(), current.getY())) {
                 MazeCell neighbor = null;
@@ -97,8 +106,7 @@ public class MazePanel extends JPanel {
                 }
                 if (!neighbor.isVisited()) {
                     neighbor.setVisited(true);
-                    neighbor.setParent(current.hashCode());
-                    closed.put(neighbor.hashCode(), neighbor);
+                    neighbor.setParent(current);
                     queue.add(neighbor);
                     repaint();
                     sleep(500 / timer);
@@ -107,16 +115,16 @@ public class MazePanel extends JPanel {
             queue.removeFirst();
             current = queue.getFirst();
         }
+        setSolution();
     }
 
     public void solveAStar(int px, int py) throws InterruptedException {
         PriorityQueue<MazeCell> open = new PriorityQueue<MazeCell>(new MazeCellComparator());
-        ArrayList<MazeCell> closed = new ArrayList<MazeCell>();
         int g = 0;
 
         MazeCell cell = maze[px][py];
         cell.setF(h(cell.getX(), cell.getY()));
-        cell.setParent(-1);
+        cell.setParent(null);
         open.add(cell);
 
         while (!open.isEmpty()) {
@@ -124,10 +132,8 @@ public class MazePanel extends JPanel {
             sleep(500 / timer);
             MazeCell current = open.poll();
             current.setVisited(true);
-            closed.add(current);
             if (current.getX() == width - 1 && current.getY() == height - 1) {
-                setAStarSolution(closed);
-                return;
+                break;
             }
             g++;
             for (Successor s : getSuccessor(current.getX(), current.getY())) {
@@ -146,11 +152,12 @@ public class MazePanel extends JPanel {
                 }
                 if (!neighbor.isVisited()) {
                     neighbor.setF(g + h(neighbor.getX(), neighbor.getY()));
-                    neighbor.setParent(closed.size() + 1);
+                    neighbor.setParent(current);
                     open.add(neighbor);
                 }
             }
         }
+        setSolution();
     }
 
     public void paintComponent(Graphics g) {
@@ -160,10 +167,10 @@ public class MazePanel extends JPanel {
             for (int c = 0; c < height; c++) {
                 if (maze[r][c].isSolution()) {
                     g.setColor(Color.green);
-                    g.fillRect(r * 800 / size, c * 800 / size, 800 / size, 800 / size);
+                    g.fillRect(r * pixels / size, c * pixels / size, pixels / size, pixels / size);
                 } else if (maze[r][c].isVisited()) {
                     g.setColor(Color.blue);
-                    g.fillRect(r * 800 / size, c * 800 / size, 800 / size, 800 / size);
+                    g.fillRect(r * pixels / size, c * pixels / size, pixels / size, pixels / size);
                 }
             }
         }
@@ -176,18 +183,18 @@ public class MazePanel extends JPanel {
             for (int c = 0; c < height; c++) {
                 MazeCell cell = maze[r][c];
                 if (cell.hasTop()) {
-                    line = new Line2D.Float(800 / size * r, 800 / size * c, 800 / size * (r + 1), 800 / size * c);
+                    line = new Line2D.Float(pixels / size * r, pixels / size * c, pixels / size * (r + 1), pixels / size * c);
                     g2.draw(line);
                 }
                 if (cell.hasLeft()) {
-                    line = new Line2D.Float(800 / size * r, 800 / size * c, 800 / size * r, 800 / size * (c + 1));
+                    line = new Line2D.Float(pixels / size * r, pixels / size * c, pixels / size * r, pixels / size * (c + 1));
                     g2.draw(line);
                 }
             }
-            line = new Line2D.Float(800 / size * r, 800 / size * height, 800 / size * (r + 1), 800 / size * height);
+            line = new Line2D.Float(pixels / size * r, pixels / size * height, pixels / size * (r + 1), pixels / size * height);
             g2.draw(line);
         }
-        line = new Line2D.Float(800 / size * width, 0, 800 / size * width, 800 / size * height);
+        line = new Line2D.Float(pixels / size * width, 0, pixels / size * width, pixels / size * height);
         g2.draw(line);
     }
 
@@ -223,25 +230,13 @@ public class MazePanel extends JPanel {
         return Math.sqrt(Math.pow((width - 1) - px, 2) + Math.pow((height - 1) - py, 2));
     }
 
-    private void setBFSSolution(HashMap<Integer, MazeCell> closed) throws InterruptedException {
-        int parent = maze[width - 1][height - 1].getParent();
-        while (parent != -1) {
-            MazeCell cell = closed.get(parent);
+    private void setSolution() throws InterruptedException {
+        MazeCell cell = maze[width - 1][height - 1].getParent();
+        while (cell != null) {
             cell.setSolution(true);
-            parent = cell.getParent();
+            cell = cell.getParent();
             repaint();
-            sleep(200 / timer);
-        }
-    }
-
-    private void setAStarSolution(ArrayList<MazeCell> closed) throws InterruptedException {
-        MazeCell cell = closed.get(closed.size() - 1);
-        cell.setSolution(true);
-        while (cell.getParent() != -1) {
-            cell = closed.get(cell.getParent() - 2);
-            cell.setSolution(true);
-            repaint();
-            sleep(200 / timer);
+            sleep(500 / timer);
         }
     }
 }

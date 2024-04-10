@@ -7,7 +7,7 @@ public class MazeCell {
     private boolean solution;
     private int x;
     private int y;
-    private int parent;
+    private MazeCell parent;
     private double f;
 
     public MazeCell(int x, int y) {
@@ -85,11 +85,11 @@ public class MazeCell {
         this.y = y;
     }
 
-    public int getParent() {
+    public MazeCell getParent() {
         return parent;
     }
 
-    public void setParent(int parent) {
+    public void setParent(MazeCell parent) {
         this.parent = parent;
     }
 

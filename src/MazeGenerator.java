@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Stack;
 
 public class MazeGenerator {
     private final int width;
@@ -21,9 +22,9 @@ public class MazeGenerator {
 
     public static void main(String[] args) {
         System.out.println("MAZE GENERATOR");
-        MazeGenerator mazeGen = new MazeGenerator(20, 20);
+        MazeGenerator mazeGen = new MazeGenerator(6500, 6500);
         mazeGen.generateMaze(0, 0);
-        mazeGen.printMaze();
+        System.out.println(mazeGen);
     }
 
     public MazeCell[][] getMaze() {
@@ -31,10 +32,20 @@ public class MazeGenerator {
     }
 
     public void generateMaze(int px, int py) {
-        MazeCell cell = maze[px][py];
-        cell.setVisited(true);
-        ArrayList<Successor> successors = getSuccessors(px, py);
-        while (!successors.isEmpty()) {
+        Stack<MazeCell> stack = new Stack<>();
+        stack.push(maze[px][py]);
+        while (!stack.isEmpty()) {
+            MazeCell cell = stack.peek();
+            cell.setVisited(true);
+            px = cell.getX();
+            py = cell.getY();
+            ArrayList<Successor> successors = getSuccessors(px, py);
+
+            if(successors.isEmpty()) {
+                stack.pop();
+                continue;
+            }
+
             int r = random.nextInt(successors.size());
             Successor s = successors.get(r);
             successors.remove(r);
@@ -43,7 +54,8 @@ public class MazeGenerator {
                 if (!top.isVisited()) {
                     cell.setTop(false);
                     top.setBottom(false);
-                    generateMaze(px, py - 1);
+                    stack.push(maze[px][py - 1]);
+                    continue;
                 }
             }
             if (s == Successor.BOTTOM) {
@@ -51,7 +63,8 @@ public class MazeGenerator {
                 if (!bottom.isVisited()) {
                     cell.setBottom(false);
                     bottom.setTop(false);
-                    generateMaze(px, py + 1);
+                    stack.push(maze[px][py + 1]);
+                    continue;
                 }
             }
             if (s == Successor.LEFT) {
@@ -59,7 +72,8 @@ public class MazeGenerator {
                 if (!left.isVisited()) {
                     cell.setLeft(false);
                     left.setRight(false);
-                    generateMaze(px - 1, py);
+                    stack.push(maze[px - 1][py]);
+                    continue;
                 }
             }
             if (s == Successor.RIGHT) {
@@ -67,49 +81,51 @@ public class MazeGenerator {
                 if (!right.isVisited()) {
                     cell.setRight(false);
                     right.setLeft(false);
-                    generateMaze(px + 1, py);
+                    stack.push(maze[px + 1][py]);
                 }
             }
         }
     }
 
-    public void printMaze() {
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
         for (int c = 0; c < height; c++) {
             for (int r = 0; r < width; r++) {
-                System.out.print(maze[r][c].hasTop() ? "+---" : "+   ");
+                sb.append(maze[r][c].hasTop() ? "+---" : "+   ");
             }
-            System.out.println("+");
+            sb.append("+\n");
 
             for (int r = 0; r < width; r++) {
                 if (r == 0 && c == 0) {
-                    System.out.print(maze[r][c].hasLeft() ? "| S " : "  S ");
+                    sb.append(maze[r][c].hasLeft() ? "| S " : "  S ");
                 } else if (r == width - 1 && c == height - 1) {
-                    System.out.print(maze[r][c].hasLeft() ? "| E " : "  E ");
+                    sb.append(maze[r][c].hasLeft() ? "| E " : "  E ");
                 } else {
-                    System.out.print(maze[r][c].hasLeft() ? "|   " : "    ");
+                    sb.append(maze[r][c].hasLeft() ? "|   " : "    ");
                 }
             }
-            System.out.println("|");
+            sb.append("|\n");
         }
         // draw the bottom line
         for (int r = 0; r < width; r++) {
-            System.out.print("+---");
+            sb.append("+---");
         }
-        System.out.println("+");
+        sb.append("+\n");
+        return sb.toString();
     }
 
     private ArrayList<Successor> getSuccessors(int px, int py) {
         ArrayList<Successor> successors = new ArrayList<Successor>(4);
-        if (px > 0) {
+        if (px > 0 && !maze[px - 1][py].isVisited()) {
             successors.add(Successor.LEFT);
         }
-        if (py > 0) {
+        if (py > 0 && !maze[px][py - 1].isVisited()) {
             successors.add(Successor.TOP);
         }
-        if (px + 1 < width) {
+        if (px + 1 < width && !maze[px + 1][py].isVisited()) {
             successors.add(Successor.RIGHT);
         }
-        if (py + 1 < height) {
+        if (py + 1 < height && !maze[px][py + 1].isVisited()) {
             successors.add(Successor.BOTTOM);
         }
         return successors;
